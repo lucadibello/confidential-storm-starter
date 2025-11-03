@@ -158,5 +158,5 @@ RUN TARGET_GROUP="$(cat /etc/devcontainer-group 2>/dev/null || echo "${REMOTE_GR
 
 EXPOSE 2222 6666
 
-ENTRYPOINT ["sudo", "/usr/local/bin/devcontainer-entrypoint"]
-CMD ["sudo", "/usr/sbin/sshd", "-D", "-e"]
+ENTRYPOINT ["/usr/local/bin/devcontainer-entrypoint"]
+CMD ["/usr/sbin/sshd", "-D", "-e"]
