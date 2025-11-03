@@ -7,6 +7,13 @@ if ! id -u "${REMOTE_USER}" >/dev/null 2>&1; then
   REMOTE_USER="root"
 fi
 
+if command -v sshd >/dev/null 2>&1; then
+  if ! sshd -t; then
+    echo "[entrypoint] sshd configuration test failed" >&2
+    exit 1
+  fi
+fi
+
 # setup git config for the dev user
 if [ -n "${GIT_NAME:-}" ] && [ -n "${GIT_EMAIL:-}" ]; then
   sudo -u "$REMOTE_USER" git config --global user.name "$GIT_NAME"
