@@ -125,6 +125,13 @@ RUN curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-
     rm -rf /tmp/node-v${NODE_VERSION}-linux-${NODE_ARCH}* && \
     echo "Node.js installed successfully."
 
+# Install Neovim 0.11 (nightly channel)
+RUN curl -fsSL "https://github.com/neovim/neovim-releases/releases/download/v${NEOVIM_VERSION}/nvim-linux-x86_64.tar.gz" -o /tmp/nvim.tar.gz \
+    && tar -xf /tmp/nvim.tar.gz -C /opt \
+    && rm /tmp/nvim.tar.gz \
+    && mv /opt/nvim-linux-x86_64 /opt/nvim \
+    && ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
+
 # Provide entrypoint that keeps the headless Neovim server alive
 COPY .devcontainer/devcontainer-entrypoint.sh /usr/local/bin/devcontainer-entrypoint
 RUN chmod +x /usr/local/bin/devcontainer-entrypoint
@@ -151,5 +158,5 @@ RUN TARGET_GROUP="$(cat /etc/devcontainer-group 2>/dev/null || echo "${REMOTE_GR
 
 EXPOSE 2222 6666
 
-ENTRYPOINT ["/usr/local/bin/devcontainer-entrypoint"]
-CMD ["/usr/sbin/sshd", "-D", "-e"]
+ENTRYPOINT ["sudo", "/usr/local/bin/devcontainer-entrypoint"]
+CMD ["sudo", "/usr/sbin/sshd", "-D", "-e"]

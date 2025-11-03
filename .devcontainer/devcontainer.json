@@ -21,7 +21,8 @@
         "--device=/dev/sgx_enclave:/dev/sgx/enclave",
         "--device=/dev/sgx_provision:/dev/sgx/provision",
         "--device=/dev/sgx_vepc:/dev/sgx/vepc",
-        "--network storm-net",
+        "--network",
+        "storm-net",
         "--publish",
         "127.0.0.1:2222:2222",
         "--publish",
@@ -34,5 +35,5 @@
         "SSH_AUTH_SOCK": "/ssh-agent",
         "NVIM_LISTEN_ADDRESS": "0.0.0.0:6666"
     },
-    "postCreateCommand": "echo Welcome to Teaclave-Storm Devcontainer! && java -version && mvn -v && nvim --version",
+    "postCreateCommand": "sudo passwd dev"
 }

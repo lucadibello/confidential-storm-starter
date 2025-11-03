@@ -5,7 +5,7 @@ dotenv: [".env"]
 vars:
   WORKSPACE: .
   SESSION: dev
-  CONTAINER_NAME: storm-devcontainer
+  CONTAINER_NAME: teaclave-storm
 
 tasks:
   devcontainer:
