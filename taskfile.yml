@@ -6,6 +6,12 @@ vars:
   WORKSPACE: .
   SESSION: dev
   CONTAINER_NAME: teaclave-storm
+  TUNNEL_SRV: sws01
+  TUNNEL_USER: luca
+  SSH_TUNNEL_REMOTE_PORT: 2222
+  NVIM_TUNNEL_REMOTE_PORT: 6666
+  SSH_TUNNEL_LOCAL_PORT: 8022
+  NVIM_TUNNEL_LOCAL_PORT: 8066
 
 tasks:
   devcontainer:
@@ -41,3 +47,14 @@ tasks:
     cmds:
       - docker stop {{.CONTAINER_NAME}} || true
       - docker rm -f -v {{.CONTAINER_NAME}} || true
+
+  tunnel-ssh:
+    desc: Expose the devcontainer’s SSH port locally so you can connect via SSH without extra steps
+    cmds:
+      - ssh -N -L {{.SSH_TUNNEL_LOCAL_PORT}}:127.0.0.1:{{.SSH_TUNNEL_REMOTE_PORT}} {{.TUNNEL_USER}}@{{.TUNNEL_SRV}}
+
+  tunnel-nvim:
+    desc: Forward the devcontainer’s Neovim headless server port to your machine for remote-UI access
+    cmds:
+      - ssh -N -L {{.NVIM_TUNNEL_LOCAL_PORT}}:127.0.0.1:{{.NVIM_TUNNEL_REMOTE_PORT}} {{.TUNNEL_USER}}@{{.TUNNEL_SRV}}
+
