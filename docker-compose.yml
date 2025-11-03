@@ -1,0 +1,55 @@
+x-storm-common: &storm-common
+  image: "storm:${STORM_VERSION}-jre${STORM_JAVA_VERSION}"
+  restart: unless-stopped
+  environment:
+    STORM_CONF_DIR: /conf
+  volumes:
+    - ./conf/storm.yaml:/conf/storm.yaml
+    - ./data/storm:/storm-data
+  networks:
+    - storm-net
+
+services:
+  zookeeper:
+    image: "zookeeper:${ZOOKEEPER_VERSION}"
+    restart: unless-stopped
+    environment:
+      ZOO_TICK_TIME: 2000
+      ZOO_MAX_CLIENT_CNXNS: 60
+    ports:
+      - "2181:2181"
+    volumes:
+      - ./data/zk:/data
+      - ./data/zk-log:/datalog
+    networks:
+      - storm-net
+
+  nimbus:
+    <<: *storm-common
+    container_name: storm-nimbus
+    command: ["storm", "nimbus"]
+    hostname: "nimbus"
+    depends_on:
+      - zookeeper
+    ports:
+      - "6627:6627" # 'storm jar' submissions
+
+  ui:
+    <<: *storm-common
+    container_name: storm-ui
+    command: ["storm", "ui"]
+    depends_on:
+      - nimbus
+    ports:
+      - "9090:8080" # Storm UI
+
+  supervisor:
+    <<: *storm-common
+    container_name: storm-supervisor-1
+    command: ["storm", "supervisor"]
+    depends_on:
+      - nimbus
+
+networks:
+  storm-net: # bridged network connected to devcontainer
+    external: true

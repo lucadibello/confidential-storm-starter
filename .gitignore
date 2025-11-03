@@ -1,0 +1,95 @@
+# Compiled Java class files
+*.class
+target/
+build/
+out/
+
+# Java package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Virtual machine crash logs
+hs_err_pid*
+replay_pid*
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Gradle
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+.metadata/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Gramine specific files
+*.manifest
+*.manifest.sgx
+*.sig
+*.token
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Node modules (if using any JS tooling)
+node_modules/
+
+# Python cache (if using any Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# TLS certificates and keystores
+*.keystore
+*.truststore
+*.cer
+*.crt
+*.pem
+*.key
+
+# Benchmark results
+benchmark-results/
+
+# venv
+.venv/
+
+# worktrees
+worktrees/
+
+# Keep only the .gitkeep files in the data directories to ensure the directories are tracked
+data/*
+!data/.gitkeep
+!data/storm/.gitkeep
+!data/zk/.gitkeep
+!data/zk-log/.gitkeep
