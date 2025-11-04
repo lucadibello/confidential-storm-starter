@@ -1,14 +1,15 @@
-package ch.usi.inf.confidentialstorm.spouts;
+package ch.usi.inf.confidentialstorm.host.spouts;
 
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichSpout;
 import org.apache.storm.topology.OutputFieldsDeclarer;
-import org.apache.storm.example.util.JokeReader;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ch.usi.inf.confidentialstorm.host.util.JokeReader;
 
 import java.io.IOException;
 import java.util.Map;

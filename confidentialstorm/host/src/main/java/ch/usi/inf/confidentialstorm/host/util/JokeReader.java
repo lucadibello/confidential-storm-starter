@@ -1,4 +1,4 @@
-package ch.usi.inf.confidentialstorm.util;
+package ch.usi.inf.confidentialstorm.host.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;

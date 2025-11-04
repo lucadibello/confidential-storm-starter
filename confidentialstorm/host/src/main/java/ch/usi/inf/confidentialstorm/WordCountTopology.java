@@ -2,15 +2,16 @@ package ch.usi.inf.confidentialstorm;
 
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
-import org.apache.storm.example.bolts.HistogramBolt;
-import org.apache.storm.example.bolts.SplitSentenceBolt;
-import org.apache.storm.example.bolts.WordCounterBolt;
-import org.apache.storm.example.spouts.RandomJokeSpout;
 import org.apache.storm.topology.ConfigurableTopology;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ch.usi.inf.confidentialstorm.host.bolts.HistogramBolt;
+import ch.usi.inf.confidentialstorm.host.bolts.SplitSentenceBolt;
+import ch.usi.inf.confidentialstorm.host.bolts.WordCounterBolt;
+import ch.usi.inf.confidentialstorm.host.spouts.RandomJokeSpout;
 
 class WordCountTopology extends ConfigurableTopology {
     private static final String PROD_SYSTEM_PROPERTY = "storm.prod";

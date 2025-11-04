@@ -1,4 +1,4 @@
-package ch.usi.inf.confidentialstorm.bolts;
+package ch.usi.inf.confidentialstorm.host.bolts;
 
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;

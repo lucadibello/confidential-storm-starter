@@ -1,4 +1,4 @@
-package ch.usi.inf.confidentialstorm.bolts;
+package ch.usi.inf.confidentialstorm.host.bolts;
 
 import org.apache.storm.Config;
 import org.apache.storm.Constants;

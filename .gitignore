@@ -45,12 +45,6 @@ mvnw.cmd
 ehthumbs.db
 Thumbs.db
 
-# Gramine specific files
-*.manifest
-*.manifest.sgx
-*.sig
-*.token
-
 # Temporary files
 *.tmp
 *.temp
@@ -72,10 +66,6 @@ __pycache__/
 *.pem
 *.key
 
-# Benchmark results
-benchmark-results/
-
-# venv
 .venv/
 
 # worktrees
@@ -87,3 +77,6 @@ data/*
 !data/storm/.gitkeep
 !data/zk/.gitkeep
 !data/zk-log/.gitkeep
+
+# Gradle
+.gradle/

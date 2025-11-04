@@ -158,7 +158,7 @@
             <artifactId>enclave</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.benchmark.teaclave</groupId>
+            <groupId>ch.usi.inf.confidentialstorm</groupId>
             <artifactId>common</artifactId>
         </dependency>
         <dependency>
