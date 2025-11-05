@@ -126,9 +126,15 @@ RUN curl -fsSL "https://github.com/graalvm/graalvm-ce-builds/releases/download/v
 # NOTE: these are the settings already present inside the /etc/environment file
 # GRAALVM_HOME="/root/tools/graalvm-ce-java11-22.2.0"
 # JAVA_HOME="/root/tools/graalvm-ce-java11-22.2.0"
+RUN sed -i '/^GRAALVM_HOME=/d' /etc/environment \
+  && sed -i '/^JAVA_HOME=/d' /etc/environment \
+  && echo "GRAALVM_HOME=\"/root/tools/graalvm-ce-java17-linux-${TARGET_ARCH}-${GRAALVM_VERSION}\"" >> /etc/environment \
+  && echo "JAVA_HOME=\"/root/tools/graalvm-ce-java17-linux-${TARGET_ARCH}-${GRAALVM_VERSION}\"" >> /etc/environment
 
+# Set OpenJDK 25 as default Java version using update-alternatives
+RUN update-alternatives --set java /usr/lib/jvm/java-17-openjdk-*/bin/java \
+  && update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-*/bin/javac \
 
-# TODO: Set OpenJDK 25 as default Java version using update-alternatives
 # NOTE: why? host is compiled using openjdk, enclave using graalvm!
 # ➜  confidentialstorm git:(main) java --version
 # openjdk 11.0.17 2022-10-18
@@ -140,11 +146,6 @@ RUN curl -fsSL "https://github.com/graalvm/graalvm-ce-builds/releases/download/v
 # OpenJDK 64-Bit Server VM GraalVM CE 22.2.0 (build 11.0.16+8-jvmci-22.2-b06, mixed mode, sharing)
 # ➜  confidentialstorm git:(main) echo $JAVA_HOME
 # /root/tools/graalvm-ce-java11-22.2.0
-
-RUN update-alternatives --set java /usr/lib/jvm/java-17-openjdk-*/bin/java \
-  && update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-*/bin/javac \
-  
-
 
 # lazygit (binary release)
 RUN LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | \grep -Po '"tag_name": *"v\K[^"]*') && \
