@@ -116,14 +116,28 @@ RUN set -eux; \
   git clone https://github.com/intel/linux-sgx.git /tmp/linux-sgx; \
   cd /tmp/linux-sgx; \
   make preparation; \
-  cp external/toolset/ubuntu24.04/* /usr/local/bin; \
+  # if toolset present, copy it
+  if [ -d external/toolset/ubuntu24.04 ]; then cp external/toolset/ubuntu24.04/* /usr/local/bin; \
+  elif [ -d external/toolset/ubuntu22.04 ]; then cp external/toolset/ubuntu22.04/* /usr/local/bin; \
+  else echo "No toolset found — skipping"; \
+  fi; \
   which ar as ld objcopy objdump ranlib; \
   make sdk; \
   make sdk_install_pkg; \
   make deb_psw_pkg; \
-  # Correct path for the SDK installer inside the repo:
-  cp linux/installer/bin/sgx_linux_x64_sdk_*.bin /root/tools; \
-  echo "Intel SGX SDK installer prepared successfully."; \
+  # Resolve the exact SDK installer filename
+  SDK_BIN="$(find linux/installer/bin -maxdepth 1 -type f -name 'sgx_linux_x64_sdk_*.bin' | head -n 1)"; \
+  if [ -z "$SDK_BIN" ]; then echo "ERROR: Could not find SGX SDK installer binary!" >&2; exit 1; fi; \
+  echo "Found SDK installer: $SDK_BIN"; \
+  # Copy installer to tools
+  mkdir -p /root/tools; \
+  cp "$SDK_BIN" /root/tools/sgx_sdk.bin; \
+  chmod +x /root/tools/sgx_sdk.bin; \
+  echo "Intel SGX SDK installer copied."; \
+  # Install SDK non-interactively
+  printf 'no\n/opt/sgxsdk\n' | /root/tools/sgx_sdk.bin; \
+  echo "Intel SGX SDK installed in /opt/sgxsdk"; \
+  # cleanup
   rm -rf /tmp/linux-sgx
 
 # b) GraalVM (Java 17) + native-image
