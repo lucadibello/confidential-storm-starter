@@ -25,8 +25,8 @@ class WordCountTopology extends ConfigurableTopology {
     public int run(String[] args) {
         TopologyBuilder builder = new TopologyBuilder();
         Logger LOG = LoggerFactory.getLogger(WordCountTopology.class);
-    boolean isProd = isProdEnvironment(args);
-    LOG.info("Starting WordCountTopology in {} mode", isProd ? "PROD" : "LOCAL");
+        boolean isProd = isProdEnvironment(args);
+        LOG.info("Starting WordCountTopology in {} mode", isProd ? "PROD" : "LOCAL");
 
         // WordSpout: stream of phrases from a book
         builder.setSpout("random-joke-spout", new RandomJokeSpout(), 2);
@@ -69,21 +69,21 @@ class WordCountTopology extends ConfigurableTopology {
         }
     }
 
-  private boolean isProdEnvironment(String[] args) {
-    if (args != null) {
-      for (String arg : args) {
-        if ("--prod".equalsIgnoreCase(arg) || "--production".equalsIgnoreCase(arg)) {
-          return true;
+    private boolean isProdEnvironment(String[] args) {
+        if (args != null) {
+            for (String arg : args) {
+                if ("--prod".equalsIgnoreCase(arg) || "--production".equalsIgnoreCase(arg)) {
+                    return true;
+                }
+                if ("--local".equalsIgnoreCase(arg)) {
+                    return false;
+                }
+            }
         }
-        if ("--local".equalsIgnoreCase(arg)) {
-          return false;
+        String sysProp = System.getProperty(PROD_SYSTEM_PROPERTY);
+        if (sysProp != null) {
+            return Boolean.parseBoolean(sysProp);
         }
-      }
-    }
-    String sysProp = System.getProperty(PROD_SYSTEM_PROPERTY);
-    if (sysProp != null) {
-      return Boolean.parseBoolean(sysProp);
-    }
         String envVar = System.getenv(PROD_ENV_VAR);
         if (envVar != null) {
             return Boolean.parseBoolean(envVar);
