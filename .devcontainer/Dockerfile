@@ -93,7 +93,7 @@ RUN GROUP_NAME="${REMOTE_GROUP}" \
 # 1) Intel SGX runtime libs from Intel apt repo (noble)
 RUN set -eux; \
   install -d -m 0755 /etc/apt/keyrings; \
-  wget -q -O /etc/apt/keyrings/intel-sgx-keyring.asc \
+  curl -fsSL "https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key" -o /etc/apt/keyrings/intel-sgx-keyring.asc; \
   https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key; \
   echo 'deb [signed-by=/etc/apt/keyrings/intel-sgx-keyring.asc arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu noble main' \
   > /etc/apt/sources.list.d/intel-sgx.list; \
@@ -112,33 +112,14 @@ RUN set -eux; \
 # 1) Install core components for development
 RUN mkdir -p /root/tools
 
-# a) Intel SGX components (prepare SDK installer)
+# a) Intel SGX SDK (.bin installer)
 RUN set -eux; \
-  git clone https://github.com/intel/linux-sgx.git /tmp/linux-sgx; \
-  cd /tmp/linux-sgx; \
-  make preparation; \
-  # if toolset present, copy it
-  if [ -d external/toolset/ubuntu24.04 ]; then cp external/toolset/ubuntu24.04/* /usr/local/bin; \
-  elif [ -d external/toolset/ubuntu22.04 ]; then cp external/toolset/ubuntu22.04/* /usr/local/bin; \
-  else echo "No toolset found — skipping"; \
-  fi; \
-  which ar as ld objcopy objdump ranlib; \
-  make sdk; \
-  make sdk_install_pkg;
-RUN set -eux; \
-  SDK_BIN="$(find linux/installer/bin -maxdepth 1 -type f -name 'sgx_linux_x64_sdk_*.bin' | head -n 1)"; \
-  if [ -z "$SDK_BIN" ]; then echo "ERROR: Could not find SGX SDK installer binary!" >&2; exit 1; fi; \
-  echo "Found SDK installer: $SDK_BIN"; \
-  # Copy installer to tools
-  mkdir -p /root/tools; \
-  cp "$SDK_BIN" /root/tools/sgx_sdk.bin; \
-  chmod +x /root/tools/sgx_sdk.bin; \
-  echo "Intel SGX SDK installer copied."; \
-  # Install SDK non-interactively
-  /root/tools/sgx_sdk.bin --prefix /opt/sgxsdk; \
-  echo "Intel SGX SDK installed in /opt/sgxsdk"; \
-  # cleanup
-  rm -rf /tmp/linux-sgx
+  url="https://download.01.org/intel-sgx/sgx-linux/2.26/distro/ubuntu24.04-server/sgx_linux_x64_sdk_2.26.100.0.bin"; \
+  curl -fsSL -o /tmp/sgx_sdk.bin "$url"; \
+  chmod +x /tmp/sgx_sdk.bin; \
+  /tmp/sgx_sdk.bin --prefix /opt/teesdk; \
+  rm -f /tmp/sgx_sdk.bin; \
+  echo 'source /opt/teesdk/sgxsdk/environment' > /etc/profile.d/sgx-env.sh
 
 # b) GraalVM (Java 17) + native-image
 RUN set -eux; \
@@ -158,7 +139,7 @@ RUN chown -R "${REMOTE_USER}:${REMOTE_GROUP}" /root/tools
 # a) ripgrep
 RUN set -eux; \
   curl -fsSL https://github.com/BurntSushi/ripgrep/releases/download/14.1.1/ripgrep_14.1.1-1_amd64.deb -o /tmp/ripgrep.deb; \
-  dpkg -i /tmp/ripgrep.deb || apt-get -y -f install; \
+  dpkg -i /tmp/ripgrep.deb || apt-get -y --no-install-recommends -f install; \
   rm -f /tmp/ripgrep.deb
 
 # b) Lazygit
@@ -238,9 +219,9 @@ RUN set -eux; \
   chmod 0644 /etc/profile.d/sgxsdk.sh; \
   # zsh: source only for interactive shells
   printf '%s\n' \
-    'if [[ -o interactive && -f /opt/sgxsdk/environment ]]; then' \
-    '  source /opt/sgxsdk/environment' \
-    'fi' >> /etc/zsh/zshrc
+  'if [[ -o interactive && -f /opt/sgxsdk/environment ]]; then' \
+  '  source /opt/sgxsdk/environment' \
+  'fi' >> /etc/zsh/zshrc
 
 EXPOSE 2222 6666
 WORKDIR /workspaces/teaclave-storm
