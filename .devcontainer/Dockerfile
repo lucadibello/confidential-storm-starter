@@ -103,17 +103,6 @@ RUN set -eux; \
   sgx-aesm-service \
   && rm -rf /var/lib/apt/lists/*
 
-# c) Install occulum from source
-RUN set -eux; \
-  git clone https://github.com/occlum/occlum /tmp/occlum-src; \
-  cd /tmp/occlum-src; \
-  OCCLUM_RELEASE_BUILD=1 make submodule; \
-  OCCLUM_RELEASE_BUILD=1 make; \
-  OCCLUM_RELEASE_BUILD=1 make install;
-
-# d) Copy occulum DCAP libraries locally for remote attestation support
-# COPY --from=docker.io/occlum/occlum:0.31.0-ubuntu22.04 /opt/occlum/toolchains/dcap_lib /opt/occlum/toolchains/dcap_lib
-
 # 1) Install core components for development
 RUN mkdir -p /root/tools
 
@@ -125,7 +114,18 @@ RUN set -eux; \
   /tmp/sgx_sdk.bin --prefix /opt; \
   rm -f /tmp/sgx_sdk.bin;
 
-# b) GraalVM (Java 17) + native-image
+# b) Install occulum from source
+RUN set -eux; \
+  git clone https://github.com/occlum/occlum /tmp/occlum-src; \
+  cd /tmp/occlum-src; \
+  OCCLUM_RELEASE_BUILD=1 make submodule; \
+  OCCLUM_RELEASE_BUILD=1 make; \
+  OCCLUM_RELEASE_BUILD=1 make install;
+
+# Copy occulum DCAP libraries locally for remote attestation support
+# COPY --from=docker.io/occlum/occlum:0.31.0-ubuntu22.04 /opt/occlum/toolchains/dcap_lib /opt/occlum/toolchains/dcap_lib
+
+# c) GraalVM (Java 17) + native-image
 RUN set -eux; \
   url="https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${GRAALVM_VERSION}/graalvm-ce-java17-linux-${GRAALVM_ARCH}-${GRAALVM_VERSION}.tar.gz"; \
   curl -fsSL -o /tmp/graalvm.tgz "$url"; \
