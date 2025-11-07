@@ -36,7 +36,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # 0) Core setup
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  autoconf automake build-essential cmake g++ gcc make ocaml ocamlbuild zlib1g-dev python-is-python3 pkg-config perl file \
+  autoconf automake build-essential cmake g++ gcc make ocaml ocamlbuild zlib1g-dev python-is-python3 pkg-config perl file maven \
   git \
   ca-certificates curl openssh-client openssh-server openssl wget gnupg jq \
   tar unzip xz-utils \
@@ -97,7 +97,6 @@ RUN set -eux; \
   libsgx-dcap-ql-dev \
   libsgx-dcap-quote-verify-dev \
   libsgx-dcap-default-qpl \
-  sgx-aesm-service \
   && rm -rf /var/lib/apt/lists/*
 
 # 1) Install core components for development
@@ -108,28 +107,51 @@ RUN set -eux; \
   url="https://download.01.org/intel-sgx/sgx-linux/2.26/distro/ubuntu24.04-server/sgx_linux_x64_sdk_2.26.100.0.bin"; \
   curl -fsSL -o /tmp/sgx_sdk.bin "$url"; \
   chmod +x /tmp/sgx_sdk.bin; \
-  /tmp/sgx_sdk.bin --prefix /opt; \
+  mkdir -p /opt/teesdk; \
+  /tmp/sgx_sdk.bin --prefix /opt/teesdk; \
   rm -f /tmp/sgx_sdk.bin;
 
-# b) configure environment + build occulum
-ENV SGX_SDK=/opt/sgxsdk \
-    PATH=/opt/sgxsdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-    PKG_CONFIG_PATH=/opt/sgxsdk/pkgconfig \
-    LD_LIBRARY_PATH=/opt/sgxsdk/lib64:/opt/sgxsdk/sdk_libs \
-    LIBRARY_PATH=/opt/sgxsdk/lib64:/opt/sgxsdk/sdk_libs \
-    CPATH=/opt/sgxsdk/include
+# b) configure environment (avoid sourcing environment file)
+ENV SGX_SDK=/opt/teesdk/sgxsdk \
+  PATH=$PATH:$SGX_SDK/bin:$SGX_SDK/bin/x64 \
+  PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$SGX_SDK/pkgconfig \
+  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SGX_SDK/sdk_libs
 
-RUN printf '%s\n' /opt/sgxsdk/lib64 /opt/sgxsdk/sdk_libs \
-    > /etc/ld.so.conf.d/sgxsdk.conf && ldconfig
+RUN printf '%s\n' /opt/teesdk/sgxsdk/sdk_libs > /etc/ld.so.conf.d/sgxsdk.conf && ldconfig
 
-RUN set -eux; \
-  git clone https://github.com/occlum/occlum /tmp/occulum-src;
-#  cd /tmp/occulum-src;
-#  OCCLUM_RELEASE_BUILD=1 make submodule; \
+# RUN set -eux; \
+#  git clone https://github.com/occlum/occlum /tmp/occlum-src; \
+#  cd /tmp/occlum-src; \
+#  export OCCLUM_RELEASE_BUILD=1; \
+#  SGX_SDK=/opt/sgxsdk make minimal_sgx_libs; \
+#  make submodule; \
 #  OCCLUM_RELEASE_BUILD=1 make; \
 #  OCCLUM_RELEASE_BUILD=1 make install; \
 #  rm -rf /tmp/occlum-src
 
+# b) Install teaclave release v0.1.0 to /opt/javaenclave
+RUN set -eux; \
+    url="https://github.com/apache/teaclave-java-tee-sdk/archive/refs/tags/v0.1.0.tar.gz"; \
+    curl -fsSL -o /tmp/javanenclave.tgz "$url"; \
+    tar -xzf /tmp/javanenclave.tgz -C /tmp; \
+    mvn install:install-file -DgroupId=org.graalvm.compiler -DartifactId=graal-processor -Dversion=22.2.0 -Dpackaging=jar -Dfile="${GRAALVM_HOME}/lib/graal/graal-processor.jar"; \
+#    mvn -f /tmp/teaclave-java-tee-sdk-0.1.0/sdk/pom.xml clean install; \
+#    mvn -f /tmp/teaclave-java-tee-sdk-0.1.0/third-party-libs/bouncycastle-native/pom.xml clean install; \
+    cp -r /tmp/teaclave-java-tee-sdk-0.1.0/sdk/native/bin /opt/javaenclave; \
+    cp -r /tmp/teaclave-java-tee-sdk-0.1.0/sdk/native/config /opt/javaenclave; \
+    cp -r /tmp/teaclave-java-tee-sdk-0.1.0/sdk/native/script/build_app /opt/javaenclave
+
+#   mkdir -p /opt/javaenclave/jar/sdk; \
+#   mkdir -p /opt/javaenclave/jar/sdk/host; \
+#   mkdir -p /opt/javaenclave/jar/sdk/enclave; \
+#   mkdir -p /opt/javaenclave/jar/sdk/common; \
+#   cp -r /tmp/teaclave-java-tee-sdk-0.1.0/sdk/pom.xml /opt/javaenclave/jar/sdk; \
+#   cp -r /tmp/teaclave-java-tee-sdk-0.1.0/sdk/host/pom.xml /opt/javaenclave/jar/sdk/host; \
+#   cp -r /tmp/teaclave-java-tee-sdk-0.1.0/sdk/host/target/*.jar /opt/javaenclave/jar/sdk/host; \
+#   cp -r /tmp/teaclave-java-tee-sdk-0.1.0/sdk/enclave/pom.xml /opt/javaenclave/jar/sdk/enclave; \
+#   cp -r /tmp/teaclave-java-tee-sdk-0.1.0/sdk/enclave/target/*.jar /opt/javaenclave/jar/sdk/enclave; \
+#   cp -r /tmp/teaclave-java-tee-sdk-0.1.0/sdk/common/pom.xml /opt/javaenclave/jar/sdk/common; \
+#   cp -r /tmp/teaclave-java-tee-sdk-0.1.0/sdk/common/target/*.jar /opt/javaenclave/jar/sdk/common;
 # Copy occulum DCAP libraries locally for remote attestation support
 # COPY --from=docker.io/occlum/occlum:0.31.0-ubuntu22.04 /opt/occlum/toolchains/dcap_lib /opt/occlum/toolchains/dcap_lib
 
@@ -222,17 +244,9 @@ RUN mkdir -p /var/run/sshd \
   && grep -qxF 'AllowTcpForwarding yes' /etc/ssh/sshd_config || echo 'AllowTcpForwarding yes' >> /etc/ssh/sshd_config \
   && grep -qxF 'X11Forwarding yes' /etc/ssh/sshd_config || echo 'X11Forwarding yes' >> /etc/ssh/sshd_config
 
-# g) Auto-source SGX SDK for interactive shells (bash & zsh)
-RUN set -eux; \
-  echo '[ -f /opt/sgxsdk/environment ] && . /opt/sgxsdk/environment' > /etc/profile.d/sgx-env.sh; \
-  chmod 0644 /etc/profile.d/sgx-env.sh; \
-  printf '%s\n' \
-  'if [[ -o interactive && -f /opt/sgxsdk/environment ]]; then' \
-  '  source /opt/sgxsdk/environment' \
-  'fi' >> /etc/zsh/zshrc
-
-# FINALLY - ensure user owns tools
-RUN chown -R "${REMOTE_USER}:${REMOTE_GROUP}" /root/tools
+# FINALLY - ensure user owns tools / libs
+RUN chown -R "${REMOTE_USER}:${REMOTE_GROUP}" /root
+RUN chown -R "${REMOTE_USER}:${REMOTE_GROUP}" /opt
 
 EXPOSE 2222 6666
 WORKDIR /workspaces/teaclave-storm
