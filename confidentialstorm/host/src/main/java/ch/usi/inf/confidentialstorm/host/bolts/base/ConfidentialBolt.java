@@ -23,7 +23,7 @@ public abstract class ConfidentialBolt<S> extends BaseRichBolt {
 
     private final Class<S> serviceClass;
     private final EnclaveType defaultEnclaveType;
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private final Logger LOG = LoggerFactory.getLogger(getClass());
 
     protected OutputCollector collector;
     private Enclave enclave;
@@ -46,16 +46,16 @@ public abstract class ConfidentialBolt<S> extends BaseRichBolt {
         this.activeEnclaveType = resolveEnclaveType(topoConf);
         this.componentId = context.getThisComponentId();
         this.taskId = context.getThisTaskId();
-        log.info("Preparing bolt {} (task {}) with enclave type {}", componentId, taskId, activeEnclaveType);
+        LOG.info("Preparing bolt {} (task {}) with enclave type {}", componentId, taskId, activeEnclaveType);
         try {
             this.collector = collector;
             this.enclave = createEnclave(activeEnclaveType);
             this.service = loadService(enclave);
-            log.info("Bolt {} (task {}) initialized enclave service {}", componentId, taskId,
+            LOG.info("Bolt {} (task {}) initialized enclave service {}", componentId, taskId,
                     serviceClass.getSimpleName());
             afterPrepare(topoConf, context);
         } catch (RuntimeException e) {
-            log.error("Failed to prepare bolt {} (task {})", componentId, taskId, e);
+            LOG.error("Failed to prepare bolt {} (task {})", componentId, taskId, e);
             throw e;
         }
     }
@@ -65,7 +65,7 @@ public abstract class ConfidentialBolt<S> extends BaseRichBolt {
         try {
             processTuple(input, service);
         } catch (RuntimeException e) {
-            log.error("Bolt {} (task {}) failed processing tuple {}", componentId, taskId,
+            LOG.error("Bolt {} (task {}) failed processing tuple {}", componentId, taskId,
                     summarizeTuple(input), e);
             throw e;
         }
@@ -78,7 +78,7 @@ public abstract class ConfidentialBolt<S> extends BaseRichBolt {
             try {
                 enclave.destroy();
             } catch (EnclaveDestroyingException e) {
-                log.warn("Failed to destroy enclave cleanly", e);
+                LOG.warn("Failed to destroy enclave cleanly", e);
             }
         }
         super.cleanup();
@@ -122,7 +122,7 @@ public abstract class ConfidentialBolt<S> extends BaseRichBolt {
         try {
             return EnclaveType.valueOf(override.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
-            log.warn("Unknown enclave type '{}' for {}, falling back to {}", override, serviceClass.getSimpleName(),
+            LOG.warn("Unknown enclave type '{}' for {}, falling back to {}", override, serviceClass.getSimpleName(),
                     defaultEnclaveType);
             return defaultEnclaveType;
         }
