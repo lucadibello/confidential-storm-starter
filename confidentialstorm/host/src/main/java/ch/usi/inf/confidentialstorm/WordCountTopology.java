@@ -13,7 +13,7 @@ import ch.usi.inf.confidentialstorm.host.bolts.SplitSentenceBolt;
 import ch.usi.inf.confidentialstorm.host.bolts.WordCounterBolt;
 import ch.usi.inf.confidentialstorm.host.spouts.RandomJokeSpout;
 
-class WordCountTopology extends ConfigurableTopology {
+public class WordCountTopology extends ConfigurableTopology {
     private static final String PROD_SYSTEM_PROPERTY = "storm.prod";
     private static final String PROD_ENV_VAR = "STORM_PROD";
 
@@ -35,7 +35,7 @@ class WordCountTopology extends ConfigurableTopology {
         // WordCountBolt: counts the words that are emitted
         builder.setBolt("word-count", new WordCounterBolt(), 1).fieldsGrouping("sentence-split", new Fields("word"));
         // HistogramBolt: merges partial counters into a single (global) histogram
-        // builder.setBolt("histogram-global", new HistogramBolt(), 1).globalGrouping("word-count");
+        builder.setBolt("histogram-global", new HistogramBolt(), 1).globalGrouping("word-count");
 
         // configure spout wait strategy to avoid starving other bolts
         // NOTE: learn more here https://storm.apache.org/releases/current/Performance.html
@@ -51,16 +51,22 @@ class WordCountTopology extends ConfigurableTopology {
             conf.put("confidentialstorm.enclave.type", "TEE_SDK");
         }
         if (!isProd) {
-            // submit topology
             LOG.warn("Running in local mode");
             try (LocalCluster cluster = new LocalCluster()) {
+                // submit topology to local cluster
                 cluster.submitTopology("WordCountTopology", conf, builder.createTopology());
+
+                // run up to 1 minute
+                // NOTE: `storm local` run (by default) for 20 seconds only and then kill the topology.
+                // This sleep is needed to avoid calling killTopology too early / returning too early.
                 try {
                     Thread.sleep(60000);
                 } catch (Exception exception) {
                     System.out.println("Thread interrupted exception : " + exception);
                     LOG.error("Thread interrupted exception : ", exception);
                 }
+
+                // kill topology
                 cluster.killTopology("WordCountTopology");
                 return 0;
             } catch (Exception e) {
